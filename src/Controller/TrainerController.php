@@ -2,8 +2,8 @@
 
 namespace App\Controller;
 
+use App\Entity\Pokemon;
 use App\Entity\Trainer;
-use App\Form\TrainerType;
 use App\Repository\TrainerRepository;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
@@ -23,7 +23,7 @@ class TrainerController extends AbstractController
      */
     public function index(TrainerRepository $trainerRepository): Response
     {
-        return $this->json($trainerRepository->findAll(),200,[],[]);
+        return $this->json($trainerRepository->findAll(),200,[],['groups'=>'post:read']);
     }
 
     /**
@@ -61,58 +61,86 @@ class TrainerController extends AbstractController
         }
     }
 
-    /**
-     * @Route("/new", name="trainer_new2", methods={"GET","POST"})
+ /**
+     * @Route("/{id}", name="trainer_edit", methods={"PUT"})
      */
-    public function new2(Request $request): Response
+    public function trainerEdit(Request $request,Trainer $trainer, ValidatorInterface $validator): Response
     {
-        $trainer = new Trainer();
-        $form = $this->createForm(TrainerType::class, $trainer);
-        $form->handleRequest($request);
-
-        if ($form->isSubmitted() && $form->isValid()) {
+        try {
+            $json = json_decode($request->getContent(), true);
+            $pokemon = $this->getDoctrine()->getRepository(Pokemon::class)->find($json['pokemon']);
             $entityManager = $this->getDoctrine()->getManager();
+            $errors=$validator->validate($trainer);
+            if (count($errors)>0) {
+                return $this->json($errors,400);
+            }
+            $trainer->addPokemon($pokemon);
+            $pokemon->setLevelevolution($json['levelevolution']);
+            
             $entityManager->persist($trainer);
             $entityManager->flush();
-
-            return $this->redirectToRoute('trainer_index');
+            return $this->json($trainer,201,[],['groups'=>'post:read']);
         }
-
-        return $this->render('trainer/new.html.twig', [
-            'trainer' => $trainer,
-            'form' => $form->createView(),
-        ]);
-    }
-
-    /**
-     * @Route("/{id}", name="trainer_show", methods={"GET"})
-     */
-    public function show(Trainer $trainer): Response
-    {
-        return $this->render('trainer/show.html.twig', [
-            'trainer' => $trainer,
-        ]);
-    }
-
-    /**
-     * @Route("/{id}/edit", name="trainer_edit", methods={"GET","POST"})
-     */
-    public function edit(Request $request, Trainer $trainer): Response
-    {
-        $form = $this->createForm(TrainerType::class, $trainer);
-        $form->handleRequest($request);
-
-        if ($form->isSubmitted() && $form->isValid()) {
-            $this->getDoctrine()->getManager()->flush();
-
-            return $this->redirectToRoute('trainer_index');
+        catch (NotEncodableValueException $e) {
+            return $this->json ([
+                'status' =>  400,
+                'message' => $e->getMessage()
+            ]);
         }
-
-        return $this->render('trainer/edit.html.twig', [
-            'trainer' => $trainer,
-            'form' => $form->createView(),
-        ]);
     }
+
+    // /**
+    //  * @Route("/new", name="trainer_new2", methods={"GET","POST"})
+    //  */
+    // public function new2(Request $request): Response
+    // {
+    //     $trainer = new Trainer();
+    //     $form = $this->createForm(TrainerType::class, $trainer);
+    //     $form->handleRequest($request);
+
+    //     if ($form->isSubmitted() && $form->isValid()) {
+    //         $entityManager = $this->getDoctrine()->getManager();
+    //         $entityManager->persist($trainer);
+    //         $entityManager->flush();
+
+    //         return $this->redirectToRoute('trainer_index');
+    //     }
+
+    //     return $this->render('trainer/new.html.twig', [
+    //         'trainer' => $trainer,
+    //         'form' => $form->createView(),
+    //     ]);
+    // }
+
+    // /**
+    //  * @Route("/{id}", name="trainer_show", methods={"GET"})
+    //  */
+    // public function show(Trainer $trainer): Response
+    // {
+    //     return $this->render('trainer/show.html.twig', [
+    //         'trainer' => $trainer,
+    //     ]);
+    // }
+
+    // /**
+    //  * @Route("/{id}/edit", name="trainer_edit", methods={"GET","POST"})
+    //  */
+    // public function edit(Request $request, Trainer $trainer): Response
+    // {
+    //     $form = $this->createForm(TrainerType::class, $trainer);
+    //     $form->handleRequest($request);
+
+    //     if ($form->isSubmitted() && $form->isValid()) {
+    //         $this->getDoctrine()->getManager()->flush();
+
+    //         return $this->redirectToRoute('trainer_index');
+    //     }
+
+    //     return $this->render('trainer/edit.html.twig', [
+    //         'trainer' => $trainer,
+    //         'form' => $form->createView(),
+    //     ]);
+    // }
 
     /**
      * @Route("/{id}", name="trainer_delete", methods={"DELETE"})

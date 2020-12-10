@@ -71,7 +71,6 @@ class PokemonController extends AbstractController
         
         try {
             $json = json_decode($request->getContent(), true);
-            $trainer = $this->getDoctrine()->getRepository(Trainer::class)->find($json['idtrainer']);
             
             $entityManager = $this->getDoctrine()->getManager();
             
@@ -82,19 +81,25 @@ class PokemonController extends AbstractController
             // dd($json['idtrainer'],$errors);
             // $pokemon->setNom($request->get('nom'));
             
-            $pokemon->setLevelevolution($json['levelevolution']);
-            $pokemon->setIdtrainer($trainer);
-            
-            if ($json['idtype1']) 
+            if ( (array_key_exists ("levelevolution", $json) ) && ($json['levelevolution']) ) 
+            {
+                $pokemon->setLevelevolution($json['levelevolution']);
+            }
+            if ( (array_key_exists ("idtrainer", $json) ) && ($json['idtrainer']) )
+            {
+                    $trainer = $this->getDoctrine()->getRepository(Trainer::class)->find($json['idtrainer']);
+                    if ($trainer) $pokemon->setIdtrainer($trainer);
+            }
+            if ( (array_key_exists ("idtype1", $json) ) && ($json['idtype1']) )
             {
                 $type1 = $this->getDoctrine()->getRepository(Type::class)->find($json['idtype1']); 
                 if ($type1) $pokemon->addIdtype($type1);
             }
-            if ($json['idtype2']) {
+            if ( (array_key_exists ("idtype2", $json) ) && ($json['idtype2']) )
+            {
                 $type2 = $this->getDoctrine()->getRepository(Type::class)->find($json['idtype2']); 
                 if ($type2) $pokemon->addIdtype($type2);
             }
-
             $entityManager->persist($pokemon);
             $entityManager->flush();
             return $this->json($pokemon,201,[],['groups'=>'post:read']);

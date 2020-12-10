@@ -19,6 +19,7 @@ class Pokemon
      * @ORM\Id
      * @ORM\GeneratedValue
      * @ORM\Column(type="integer")
+     * @Groups("post:read")
      */
     private $id;
 
@@ -45,10 +46,9 @@ class Pokemon
      * @Groups("post:read")
      */
     private $idtype;
-
+    
     /**
      * @ORM\ManyToMany(targetEntity=Trainer::class, inversedBy="pokemon",orphanRemoval=true)
-     * @Groups("post:read")
      */
     private $idtrainer;
 

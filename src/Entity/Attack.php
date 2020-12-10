@@ -6,6 +6,7 @@ use App\Repository\AttackRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Serializer\Annotation\Groups;
 
 /**
  * @ORM\Entity(repositoryClass=AttackRepository::class)
@@ -21,11 +22,13 @@ class Attack
 
     /**
      * @ORM\Column(type="string", length=50)
+     * @Groups("post:read")
      */
     private $name;
 
     /**
      * @ORM\Column(type="string", length=255, nullable=true)
+     * @Groups("post:read")
      */
     private $description;
 

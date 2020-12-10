@@ -2,13 +2,16 @@
 
 namespace App\Entity;
 
-use App\Repository\PokemonRepository;
-use Doctrine\Common\Collections\ArrayCollection;
-use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
-
+use App\Repository\PokemonRepository;
+use Doctrine\Common\Collections\Collection;
+use ApiPlatform\Core\Annotation\ApiResource;
+use Doctrine\Common\Collections\ArrayCollection;
+use Symfony\Component\Serializer\Annotation\Groups;
+use Symfony\Component\Validator\Constraints as Assert;
 /**
  * @ORM\Entity(repositoryClass=PokemonRepository::class)
+ * @ApiResource
  */
 class Pokemon
 {
@@ -21,11 +24,14 @@ class Pokemon
 
     /**
      * @ORM\Column(type="string", length=100)
+     * @Groups("post:read")
+     * @Assert\NotBlank(message="Le nom doit être renseigné")
      */
     private $nom;
 
     /**
      * @ORM\Column(type="integer", nullable=true)
+     * @Groups("post:read")
      */
     private $levelevolution;
 
@@ -36,13 +42,20 @@ class Pokemon
 
     /**
      * @ORM\ManyToMany(targetEntity=Type::class, inversedBy="pokemon")
+     * @Groups("post:read")
      */
     private $idtype;
 
     /**
-     * @ORM\ManyToMany(targetEntity=Trainer::class, inversedBy="pokemon")
+     * @ORM\ManyToMany(targetEntity=Trainer::class, inversedBy="pokemon",orphanRemoval=true)
+     * @Groups("post:read")
      */
     private $idtrainer;
+
+    /**
+     * @ORM\Column(type="blob", nullable=true)
+     */
+    private $image;
 
     public function __construct()
     {
@@ -93,7 +106,6 @@ class Pokemon
         if (!$this->idattack->contains($idattack)) {
             $this->idattack[] = $idattack;
         }
-
         return $this;
     }
 
@@ -145,9 +157,33 @@ class Pokemon
         return $this;
     }
 
+    public function setIdtrainer(Trainer $idtrainer): self
+    {
+        if (!$this->idtrainer->contains($idtrainer)) 
+        {
+            $this->idtrainer = new ArrayCollection();
+            $this->idtrainer[] = $idtrainer;
+            // dd("TEST : ",$this->idtrainer->contains($idtrainer),"----------------------------------------------",$idtrainer);
+        }
+
+        return $this;
+    }
+
     public function removeIdtrainer(Trainer $idtrainer): self
     {
         $this->idtrainer->removeElement($idtrainer);
+
+        return $this;
+    }
+
+    public function getImage()
+    {
+        return $this->image;
+    }
+
+    public function setImage($image): self
+    {
+        $this->image = $image;
 
         return $this;
     }
